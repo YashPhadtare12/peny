@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h3 class="text-dark mb-0">Dashboard Overview</h3>
+    <p class="text-muted">Quick statistics and recent activities</p>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="dashboard-card">
+            <div class="card-icon">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <div class="card-title">Total Doctors</div>
+            <div class="card-value">{{ doctors_count }}</div>
+            <a href="{{ url_for('view_doctors') }}" class="stretched-link"></a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="dashboard-card">
+            <div class="card-icon">
+                <i class="fas fa-procedures"></i>
+            </div>
+            <div class="card-title">Total Patients</div>
+            <div class="card-value">{{ patients_count }}</div>
+            <a href="{{ url_for('view_patients') }}" class="stretched-link"></a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="dashboard-card">
+            <div class="card-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="card-title">Total Appointments</div>
+            <div class="card-value">{{ appointments_count }}</div>
+            <a href="{{ url_for('view_appointments') }}" class="stretched-link"></a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Recent Appointments</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Patient</th>
+                                <th>Doctor</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in recent_appointments %}
+                            <tr>
+                                <td>{{ app.patient_name }}</td>
+                                <td>{{ app.doctor_name }}</td>
+                                <td>{{ app.date }}</td>
+                                <td>{{ app.time_slot }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if app.status == 'Completed' %}bg-success
+                                        {% elif app.status == 'Cancelled' %}bg-danger
+                                        {% else %}bg-primary{% endif %}">
+                                        {{ app.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center">No recent appointments</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Quick Actions</h4>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('add_patient') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-2"></i>Add New Patient
+                    </a>
+                    <a href="{{ url_for('add_doctor') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-md me-2"></i>Add New Doctor
+                    </a>
+                    <a href="{{ url_for('schedule_appointment') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-calendar-plus me-2"></i>Schedule Appointment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

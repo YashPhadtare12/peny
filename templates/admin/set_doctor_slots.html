@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Set Doctor Availability{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+            <i class="fas fa-clock me-2"></i>Set Availability for Dr. {{ doctor.name }}
+        </h4>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Set the weekly availability schedule for this doctor. Patients will only be able to book appointments
+            during the available time slots you define.
+        </div>
+        
+        <div class="row">
+            {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ day }}</h5>
+                    </div>
+                    <div class="card-body">
+                        {% set day_slot = slots|selectattr('day', 'equalto', day)|first %}
+                        <form method="POST" action="{{ url_for('set_doctor_slots', doctor_id=doctor.id) }}">
+                            <input type="hidden" name="day" value="{{ day }}">
+                            
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Start Time</label>
+                                    <input type="time" class="form-control" name="start_time" 
+                                           value="{{ day_slot.start_time if day_slot else '09:00' }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">End Time</label>
+                                    <input type="time" class="form-control" name="end_time" 
+                                           value="{{ day_slot.end_time if day_slot else '17:00' }}" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="hasBreak{{ day }}" 
+                                           name="has_break" {% if day_slot and day_slot.break_start %}checked{% endif %}>
+                                    <label class="form-check-label" for="hasBreak{{ day }}">Has Break Time</label>
+                                </div>
+                                
+                                <div id="breakTime{{ day }}" class="row g-2 mt-2" 
+                                     style="display: {% if day_slot and day_slot.break_start %}block{% else %}none{% endif %};">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Break Start</label>
+                                        <input type="time" class="form-control" name="break_start" 
+                                               value="{{ day_slot.break_start if day_slot else '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Break End</label>
+                                        <input type="time" class="form-control" name="break_end" 
+                                               value="{{ day_slot.break_end if day_slot else '' }}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid mt-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>Save Schedule
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+            <a href="{{ url_for('view_doctors') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Doctors
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show/hide break time fields based on checkbox
+    document.querySelectorAll('[id^="hasBreak"]').forEach(checkbox => {
+        const day = checkbox.id.replace('hasBreak', '');
+        const breakTimeDiv = document.getElementById(`breakTime${day}`);
+        
+        checkbox.addEventListener('change', function() {
+            breakTimeDiv.style.display = this.checked ? 'block' : 'none';
+        });
+    });
+</script>
+{% endblock %}

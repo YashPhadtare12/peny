@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Appointment{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-gradient-primary text-white">
+        <h4 class="mb-0">
+            <i class="fas fa-calendar-plus me-2"></i>Schedule Appointment
+        </h4>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('schedule_appointment') }}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="patient_id" class="form-label">Patient</label>
+                    <select class="form-select" id="patient_id" name="patient_id" required>
+                        <option value="">Select Patient</option>
+                        {% for patient in patients %}
+                            <option value="{{ patient.id }}" 
+                                {% if request.args.get('patient_id') == patient.id|string %}selected{% endif %}>
+                                {{ patient.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="doctor_id" class="form-label">Doctor</label>
+                    <select class="form-select" id="doctor_id" name="doctor_id" required>
+                        <option value="">Select Doctor</option>
+                        {% for doctor in doctors %}
+                            <option value="{{ doctor.id }}" 
+                                {% if request.args.get('doctor_id') == doctor.id|string %}selected{% endif %}>
+                                Dr. {{ doctor.name }} ({{ doctor.specialization }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date" name="date" required 
+                           min="{{ min_date }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="time_slot" class="form-label">Time Slot</label>
+                    <input type="hidden" id="time_slot" name="time_slot" required>
+                    <div id="time_slots" class="p-3 border rounded bg-light">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-calendar-alt fa-2x mb-2"></i>
+                            <p>Please select a doctor and date to view available slots</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{{ url_for('view_appointments') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-calendar-check me-1"></i> Schedule Appointment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Function to convert 24h time to 12h AM/PM format
+function formatTime(time24) {
+    const [hours, minutes] = time24.split(':');
+    const period = +hours >= 12 ? 'PM' : 'AM';
+    const hours12 = +hours % 12 || 12;
+    return `${hours12}:${minutes} ${period}`;
+}
+
+$(document).ready(function() {
+    // Doctor Time Slot Management
+    $('#doctor_id, #date').on('change', function() {
+        const doctorId = $('#doctor_id').val();
+        const date = $('#date').val();
+        
+        if (doctorId && date) {
+            $('#time_slots').html(`
+                <div class="text-center py-4">
+                    <div class="loading-spinner text-primary mb-3"></div>
+                    <p>Loading available time slots...</p>
+                </div>
+            `);
+            
+            $.getJSON(`/admin/get_doctor_slots/${doctorId}/${date}`)
+                .done(function(data) {
+                    if (data.error) {
+                        $('#time_slots').html(`
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                ${data.error}
+                            </div>
+                        `);
+                        return;
+                    }
+                    
+                    let html = '<div class="slot-container">';
+                    data.slots.forEach(slot => {
+                        const isBooked = data.booked_slots.includes(slot.start);
+                        const startTime = formatTime(slot.start);
+                        const endTime = formatTime(slot.end);
+                        
+                        html += `
+                            <div class="slot ${isBooked ? 'booked' : 'available'}" 
+                                 data-start="${slot.start}" ${isBooked ? '' : 'onclick="selectSlot(this)"'}>
+                                <div class="slot-time">${startTime}</div>
+                                <small class="text-muted">${endTime}</small>
+                                ${isBooked ? '<div class="slot-status text-danger"><i class="fas fa-lock"></i> Booked</div>' : ''}
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    $('#time_slots').html(html);
+                })
+                .fail(function() {
+                    $('#time_slots').html(`
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Error loading time slots
+                        </div>
+                    `);
+                });
+        }
+    });
+});
+
+// Global function for slot selection
+function selectSlot(element) {
+    $('.slot').removeClass('selected');
+    $(element).addClass('selected');
+    $('#time_slot').val($(element).data('start'));
+}
+</script>
+{% endblock %}
