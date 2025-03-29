@@ -1,3 +1,5 @@
+# Add this to your .vercelignore file to exclude unnecessary files
+node_modules/
 __pycache__/
 *.pyc
 *.pyo
@@ -5,8 +7,23 @@ __pycache__/
 .Python
 env/
 venv/
-.env
-.venv
-.vscode/
 *.sqlite
 *.db
+*.DS_Store
+*.egg-info
+*.log
+*.pot
+*.py[co]
+*.swp
+*.vscode
+*.idea
+*.ipynb
+*.csv
+*.xlsx
+*.zip
+*.tar.gz
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.gif
